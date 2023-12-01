@@ -21,14 +21,33 @@ defmodule AOC.Day01 do
   end
 
   def real_value(line) do
-    matches = Regex.scan(~r"(\d|one|two|three|four|five|six|seven|eight|nine)", line)
+    all = all_digit_indexes(line) |> Enum.sort_by(fn {i, _} -> i end)
+    {fi, fl} = List.first(all)
+    {li, ll} = List.last(all)
 
-    back_matches =
-      Regex.scan(~r"(\d|eno|owt|eerht|ruof|evif|xis|neves|thgie|enin)", String.reverse(line))
-
-    first = List.first(matches) |> List.first() |> to_num
-    last = List.first(back_matches) |> List.first() |> String.reverse() |> to_num
+    first = String.slice(line, fi, fl) |> to_num
+    last = String.slice(line, li, ll) |> to_num
     (first <> last) |> String.to_integer()
+  end
+
+  defp all_digit_indexes(line) do
+    [
+      ~r/one/,
+      ~r/two/,
+      ~r/three/,
+      ~r/four/,
+      ~r/five/,
+      ~r/six/,
+      ~r/seven/,
+      ~r/eight/,
+      ~r/nine/,
+      ~r/\d/
+    ]
+    |> Enum.flat_map(&scan_indexes(&1, line))
+  end
+
+  defp scan_indexes(re, line) do
+    Regex.scan(re, line, return: :index) |> Enum.map(&List.first/1)
   end
 
   defp to_num("one"), do: "1"
