@@ -1,4 +1,6 @@
 defmodule AOC.Day02 do
+  @cubes ~r/(\d+) (red|green|blue)/
+
   def part_1(file) do
     File.read!(file)
     |> String.trim()
@@ -24,8 +26,7 @@ defmodule AOC.Day02 do
   end
 
   defp valid_cubes?(cubes) do
-    re = ~r"(\d+) (red|green|blue)"
-    [count, colour] = Regex.run(re, cubes, capture: :all_but_first)
+    [count, colour] = Regex.run(@cubes, cubes, capture: :all_but_first)
     valid?(String.to_integer(count), colour)
   end
 
@@ -45,8 +46,7 @@ defmodule AOC.Day02 do
   end
 
   defp power(game) do
-    re = ~r"(\d+) (red|green|blue)"
-    cubes = Regex.scan(re, game, capture: :all_but_first)
+    cubes = Regex.scan(@cubes, game, capture: :all_but_first)
     max_cubes(cubes, "blue") * max_cubes(cubes, "green") * max_cubes(cubes, "red")
   end
 
