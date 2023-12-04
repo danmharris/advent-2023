@@ -29,47 +29,46 @@ defmodule AOC.Day04 do
   end
 
   def part_2(file) do
-    games =
-      File.read!(file)
-      |> String.trim()
-      |> String.split("\n")
-      |> Enum.map(&parse_game/1)
-
-    run_game(games)
+    File.read!(file)
+    |> String.trim()
+    |> String.split("\n")
+    |> Enum.map(&parse_game/1)
+    |> Enum.map(fn [winning, ours] -> MapSet.intersection(winning, ours) end)
+    |> Enum.map(&MapSet.size/1)
+    |> run_cards()
   end
 
-  defp run_game(games) do
-    run_round(games, Enum.map(games, fn _ -> 1 end))
+  defp run_cards(cards) do
+    initial_freqs =
+      0..(length(cards) - 1)
+      |> Enum.reduce(%{}, fn i, freqs -> Map.put(freqs, i, 1) end)
+
+    run_cards(cards, initial_freqs)
   end
 
-  defp run_round(games, counts) do
-    indexes = Enum.to_list(0..(length(counts) - 1))
+  defp run_cards(_cards, freqs) when freqs == %{}, do: 0
 
-    freqs =
-      Enum.filter(indexes, fn i -> Enum.at(counts, i) > 0 end)
-      |> Enum.flat_map(fn i ->
-        [winning, ours] = Enum.at(games, i)
-        w = MapSet.intersection(winning, ours) |> MapSet.size()
+  # freqs is a map of card index => number of that card
+  defp run_cards(cards, freqs) do
+    num_cards = Map.values(freqs) |> Enum.sum()
 
-        it = 1..Enum.at(counts, i)
-
-        Enum.flat_map(it, fn _ ->
-          if w > 0 do
-            Enum.to_list((i + 1)..(i + w))
-          else
-            []
-          end
-        end)
+    new_freqs =
+      Enum.map(freqs, fn {i, freq} ->
+        new_cards(cards, i, freq)
       end)
-      |> Enum.frequencies()
+      |> sum_freqs()
 
-    new = Enum.map(indexes, fn i -> Map.get(freqs, i, 0) end)
-    won = Enum.any?(new, fn i -> i > 0 end)
+    num_cards + run_cards(cards, new_freqs)
+  end
 
-    if won == true do
-      Enum.sum(counts) + run_round(games, new)
-    else
-      Enum.sum(counts)
-    end
+  defp new_cards(cards, i, times) do
+    w = Enum.at(cards, i)
+
+    Range.new(i + 1, i + w, 1)
+    |> Enum.reduce(%{}, fn i, freq -> Map.put(freq, i, times) end)
+  end
+
+  def sum_freqs(freqs) do
+    Enum.reduce(freqs, %{}, fn f, acc -> Map.merge(acc, f, fn _k, f1, f2 -> f1 + f2 end) end)
   end
 end
